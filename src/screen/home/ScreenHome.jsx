@@ -1,60 +1,41 @@
 import { Button, StyleSheet, Text, View, Alert } from 'react-native'
-import React from 'react'
-import {db} from '../../script/configFirabase';
-import { collection, addDoc } from 'firebase/firestore';
-
-
+import React, {useContext} from 'react'
+import {EstadoGlobalProductos} from '../../context/contextProductos'
 
 export default function  ScreenHome ()  {
 
-const sendData = async () => {
-  try {
-    console.log('🔄 Iniciando envío de datos...');
-    console.log('📊 Database instance:', db);
-    
-    const docRef = await addDoc(collection(db, "productos"), {
-      nombre: "Cheetos",
-      date: new Date(),
-      timestamp: Date.now(),
-      createdAt: new Date().toISOString()
-    });
-    
-    console.log("✅ Document written with ID: ", docRef.id);
-    Alert.alert("Éxito", `Documento creado correctamente con ID: ${docRef.id}`);
-    
-  } catch (error) {
-    console.error("❌ Error completo: ", error);
-    console.error("❌ Error code: ", error.code);
-    console.error("❌ Error message: ", error.message);
-    
-    let errorMessage = "Error desconocido";
-    if (error.code) {
-      switch (error.code) {
-        case 'permission-denied':
-          errorMessage = "Sin permisos para escribir en la base de datos";
-          break;
-        case 'unavailable':
-          errorMessage = "Servicio no disponible, verifica tu conexión";
-          break;
-        case 'unauthenticated':
-          errorMessage = "Usuario no autenticado";
-          break;
-        default:
-          errorMessage = `Error: ${error.message}`;
-      }
-    } else {
-      errorMessage = error.message || "Error de conexión";
+  const {dataproductos, subirdato, leerdatos, eliminarProducto} = useContext(EstadoGlobalProductos);
+
+  React.useEffect(() => {
+    if (leerdatos) {
+      leerdatos();
     }
-    
-    Alert.alert("Error", errorMessage);
-  }
-};
+  }, [leerdatos])
+
+  console.log("dataproductos", dataproductos);
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>HOME</Text>
       <Button
           title="Mandar Datos"
-          onPress={() => sendData()}/>
+          onPress={() => subirdato()}/>
+
+          {
+            dataproductos && dataproductos.length > 0 ? (
+              dataproductos.map((producto, index) => (
+                <View key={index} style={{marginTop: 10, padding: 10, borderWidth: 1}}>
+                  <Text>{producto.nombre} | {producto.fecha ? new Date(producto.fecha.seconds * 1000).toLocaleDateString() : 'Sin fecha'}</Text>
+                  <Button
+                    title="eliminar"
+                    onPress={() => eliminarProducto(producto.id)}
+                  />
+                </View>
+              ))
+            ) : (
+              <Text>No hay productos</Text>
+            )
+          }
     </View>
   )
 }
